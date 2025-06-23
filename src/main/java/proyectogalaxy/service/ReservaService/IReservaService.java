@@ -1,5 +1,6 @@
 package proyectogalaxy.service.ReservaService;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,6 +40,7 @@ public class IReservaService implements ReservaService {
 
 
     @Override
+    @Transactional
     public ReservaResponseDto crearReserva(ReservaRequestDto reserva) {
         Cliente cliente = clienteRepo.findById(reserva.getClienteId()).orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
 

@@ -29,7 +29,7 @@ services:
       SPRING_DATASOURCE_USERNAME: barber
       SPRING_DATASOURCE_PASSWORD: barber123
 
-      SPRING_PROFILES_ACTIVE: dev
+      SPRING_PROFILES_ACTIVE: prod
     networks:
       - microservices-net
 

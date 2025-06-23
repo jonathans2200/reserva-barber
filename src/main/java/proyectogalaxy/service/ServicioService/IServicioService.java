@@ -1,5 +1,6 @@
 package proyectogalaxy.service.ServicioService;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import proyectogalaxy.Repository.BarberoRepository;
@@ -23,6 +24,7 @@ public class IServicioService implements ServicioService {
     private BarberoRepository barberoRepository;
 
     @Override
+    @Transactional
     public ServicioResponseDto crearServicio(ServicioRequestDto servicioRequestDto) {
         Servicio servicio = servicioMapper.toEntity(servicioRequestDto);
         return servicioMapper.toDto(servicioRepository.save(servicio));

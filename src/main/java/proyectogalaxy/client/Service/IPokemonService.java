@@ -1,8 +1,8 @@
-package proyectogalaxy.service.RestPokemonService;
+package proyectogalaxy.client.Service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import proyectogalaxy.client.Service.PokemonApiClient;
+import proyectogalaxy.client.config.PokemonApiClient;
 import proyectogalaxy.client.dto.PokemonResponseDto;
 
 import java.util.List;

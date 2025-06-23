@@ -1,5 +1,6 @@
 package proyectogalaxy.service.ClienteService;
 
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import proyectogalaxy.Repository.ClienteRepository;
@@ -19,6 +20,7 @@ public class IClienteService implements ClienteService {
     private ClienteMapper clienteMapper;
 
     @Override
+    @Transactional
     public ClienteResponseDto createCliente(ClienteRequestDto cliente) {
         Cliente clienteNuevo = clienteMapper.toEntity(cliente);
         return clienteMapper.toDto(clienteRepository.save(clienteNuevo));

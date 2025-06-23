@@ -1,4 +1,4 @@
-package proyectogalaxy.service.RestPokemonService;
+package proyectogalaxy.client.Service;
 
 import proyectogalaxy.client.dto.PokemonResponseDto;
 
