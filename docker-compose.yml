@@ -1,0 +1,41 @@
+version: "3.8"
+services:
+  barber-db:
+    image: postgres:latest
+    container_name: barber-db
+    environment:
+      POSTGRES_DB: barberia_db
+      POSTGRES_USER: barber
+      POSTGRES_PASSWORD: barber123
+    ports:
+      - "5432:5432"
+    volumes:
+      - barber-db-data:/var/lib/postgresql/data
+    networks:
+      - microservices-net
+
+  barberia-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: barberia-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - barber-db
+    environment:
+
+      SPRING_DATASOURCE_URL: jdbc:postgresql://barber-db:5432/barberia_db
+      SPRING_DATASOURCE_USERNAME: barber
+      SPRING_DATASOURCE_PASSWORD: barber123
+
+      SPRING_PROFILES_ACTIVE: dev
+    networks:
+      - microservices-net
+
+volumes:
+  barber-db-data:
+
+networks:
+  microservices-net:
+    driver: bridge
