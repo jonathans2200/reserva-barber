@@ -25,7 +25,7 @@ public class Reserva {
     @JoinColumn(name = "barbero_id")
     private Barbero barbero;
 
-    @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "reserva", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DetalleReserva> detalles;
     private BigDecimal total;
 

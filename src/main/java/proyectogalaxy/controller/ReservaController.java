@@ -54,15 +54,11 @@ public class ReservaController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> actualizarReserva(@PathVariable Long id, @RequestBody ReservaRequestDto dto) {
-        try {
-            ReservaResponseDto reserva = reservaService.actualizarReserva(id, dto);
-            if (reserva != null) {
-                return new ResponseEntity<>(reserva, HttpStatus.OK);
-            }
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        ReservaResponseDto reserva = reservaService.actualizarReserva(id, dto);
+        if (reserva != null) {
+            return ResponseEntity.ok(reserva);
         }
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
-
 }
+

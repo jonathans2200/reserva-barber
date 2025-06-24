@@ -20,9 +20,8 @@ import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class IReservaService implements ReservaService {
@@ -43,8 +42,6 @@ public class IReservaService implements ReservaService {
     @Transactional
     public ReservaResponseDto crearReserva(ReservaRequestDto reserva) {
         Cliente cliente = clienteRepo.findById(reserva.getClienteId()).orElseThrow(() -> new IllegalArgumentException("Cliente no encontrado"));
-
-
         Barbero barbero = barberoRepo.findById(reserva.getBarberoId()).orElseThrow(() -> new IllegalArgumentException("Barbero no encontrado"));
 
         DayOfWeek diaReserva = reserva.getFecha().getDayOfWeek();
@@ -85,7 +82,7 @@ public class IReservaService implements ReservaService {
     public HorarioBarberoResponseDto getHorarioBarbero(Long barberoId, LocalDate fecha) {
         Barbero barbero = barberoRepo.findById(barberoId).orElseThrow();
 
-        // Validar día de descanso
+
         if (barbero.getDiaDescanso() != null && fecha.getDayOfWeek().equals(barbero.getDiaDescanso())) {
             throw new RuntimeException("El barbero descansa los " + barbero.getDiaDescanso());
         }
@@ -174,32 +171,27 @@ public class IReservaService implements ReservaService {
     @Override
     public ReservaResponseDto actualizarReserva(Long id, ReservaRequestDto reserva) {
 
-        Reserva r = reservaRepo.findById(id).orElseThrow(() -> new RuntimeException("No existe el reserva con el id: " + id));
+        Reserva r = reservaRepo.findById(id).orElseThrow(() -> new RuntimeException("No existe la reserva con el id: " + id));
 
-        Cliente cliente = clienteRepo.findById(reserva.getClienteId()).orElseThrow(() -> new RuntimeException("No Existe el cliente" + id));
+        Cliente cliente = clienteRepo.findById(reserva.getClienteId()).orElseThrow(() -> new RuntimeException("No existe el cliente con id: " + reserva.getClienteId()));
 
-        Barbero barbero = barberoRepo.findById(reserva.getBarberoId()).orElseThrow(() -> new IllegalArgumentException("Barbero no encontrado"));
+        Barbero barbero = barberoRepo.findById(reserva.getBarberoId()).orElseThrow(() -> new RuntimeException("Barbero no encontrado con id: " + reserva.getBarberoId()));
 
-        List<Servicio> servicios = reserva.getServicios().stream().map(idServicio -> servicioRepo.findById(idServicio).orElseThrow()).toList();
+        List<Servicio> servicios = reserva.getServicios().stream().map(idServicio -> servicioRepo.findById(idServicio).orElseThrow(() -> new RuntimeException("Servicio no encontrado con id: " + idServicio))).toList();
 
         int duracionTotal = servicios.stream().mapToInt(Servicio::getDuracionMinutos).sum();
+
         BigDecimal total = servicios.stream().map(Servicio::getPrecio).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         LocalTime horaFin = reserva.getHora().plusMinutes(duracionTotal);
 
         List<Reserva> reservasDelDia = reservaRepo.findByBarberoIdAndFecha(barbero.getId(), reserva.getFecha());
-        boolean disponiblididad = reservasDelDia.stream().anyMatch(existing -> !existing.getId().equals(id) && !(horaFin.isBefore(existing.getHora()) || reserva.getHora().isAfter(existing.getHoraFin())));
+        boolean ocupado = reservasDelDia.stream().anyMatch(existing -> !existing.getId().equals(id) && !(horaFin.isBefore(existing.getHora()) || reserva.getHora().isAfter(existing.getHoraFin())));
 
-        if (disponiblididad) {
-            throw new RuntimeException("El barbero tiene otra reserva en ese horario.");
+        if (ocupado) {
+            throw new RuntimeException("El barbero ya tiene otra reserva en ese horario.");
         }
 
-        List<DetalleReserva> detalles = servicios.stream().map(s -> {
-            DetalleReserva dr = new DetalleReserva();
-            dr.setReserva(r);
-            dr.setServicio(s);
-            return dr;
-        }).toList();
 
         r.setCliente(cliente);
         r.setBarbero(barbero);
@@ -208,7 +200,28 @@ public class IReservaService implements ReservaService {
         r.setHoraFin(horaFin);
         r.setTotal(total);
 
-        r.setDetalles(detalles);
+
+        List<Long> nuevosIds = servicios.stream().map(Servicio::getId).toList();
+
+
+        List<DetalleReserva> detallesActuales = r.getDetalles();
+        List<DetalleReserva> detallesFiltrados = detallesActuales.stream().filter(detalle -> nuevosIds.contains(detalle.getServicio().getId())).toList();
+
+        detallesActuales.clear();
+        detallesActuales.addAll(detallesFiltrados);
+
+
+        List<Long> idsYaAsignados = detallesFiltrados.stream().map(d -> d.getServicio().getId()).toList();
+
+        List<DetalleReserva> nuevosDetalles = servicios.stream().filter(s -> !idsYaAsignados.contains(s.getId())).map(s -> {
+            DetalleReserva dr = new DetalleReserva();
+            dr.setReserva(r);
+            dr.setServicio(s);
+            return dr;
+        }).toList();
+
+
+        detallesActuales.addAll(nuevosDetalles);
 
         return reservaMapper.toDto(reservaRepo.save(r));
     }
